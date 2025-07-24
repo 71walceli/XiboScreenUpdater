@@ -1,0 +1,14 @@
+name: xibo_screen_1
+copy_from: 
+  provider: nextcloud
+  path: Xibo
+  auth: 
+    user: admin
+    password: admin_password
+  server: http://localhost:8080
+  extensions: 
+    - .jpg
+    - .png
+    - .mp4
+    - .avi
+    - .pdf

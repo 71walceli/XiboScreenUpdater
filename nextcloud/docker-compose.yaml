@@ -1,0 +1,26 @@
+services:
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:11
+    container_name: nextcloud_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  nextcloud_data:
+  db_data:
