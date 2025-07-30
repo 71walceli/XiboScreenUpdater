@@ -414,9 +414,11 @@ class XiboClient:
                 self._log("Failed to get event ID from schedule response")
                 return False
             
-            self.force_refresh_display(display_group_id)  # Refresh display to apply changes
+            # Delete all other auto-scheduled events for this display group to avoid conflicts
+            self._log(f"Deleting all other auto-scheduled events for display group {display_group_id}")
+            deleted_count = self.delete_auto_scheduled_events(display_group_id, exclude_event_id=event_id)
             
-            self._log(f"Workflow completed successfully!")
+            self.force_refresh_display(display_group_id)  # Refresh display to apply changes            self._log(f"Workflow completed successfully!")
             self._log(f"  - Media ID: {media_id}")
             self._log(f"  - Display Group ID: {display_group_id}")
             self._log(f"  - Schedule Event ID: {event_id}")
