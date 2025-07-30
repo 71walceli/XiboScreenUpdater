@@ -119,14 +119,13 @@ def test_complete_workflow():
             return False
         
         # Get displays to test with
-        displays = client.get_displays()
-        if not displays:
+        display = config['project_to']['display']
+        if not display:
             print("❌ No displays found! Please add a display to Xibo first.")
             return False
         
         # Use the first display for testing
-        test_display = displays[0]
-        display_name = test_display.get('display')
+        display_name = display.get("name")
         print(f"Using display for test: {display_name}")
         
         # Test complete workflow (schedule for short duration for testing)
