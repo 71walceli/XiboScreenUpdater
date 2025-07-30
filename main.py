@@ -4,18 +4,9 @@ from datetime import datetime
 from time import sleep
 from requests.auth import HTTPBasicAuth
 from nextcloud_client import NextCloudClient
+from xibo_client import create_xibo_client_from_config
+import yaml
 
-NEXTCLOUD_URL = "https://your.nextcloud.server/remote.php/dav/files/your_user/"
-NEXTCLOUD_USER = "admin"
-NEXTCLOUD_PASS = "admin_password"
-
-XIBO_API_BASE = "https://your.xibo.server/api"
-XIBO_CLIENT_ID = "your_client_id"
-XIBO_CLIENT_SECRET = "your_client_secret"
-XIBO_USER = "api_user"
-XIBO_PASS = "api_password"
-
-WATCH_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf']
 POLL_INTERVAL = 300  # 5 minutes
 
 seen_files = set()
