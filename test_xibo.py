@@ -134,7 +134,7 @@ def test_complete_workflow():
         success = client.upload_and_set_screen(
             file_path=test_file,
             screen_name=display_name,
-            duration_hours=1  # Short duration for testing
+            duration_hours=10000  # Short duration for testing
         )
         
         if success:
