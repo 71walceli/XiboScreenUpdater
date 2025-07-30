@@ -405,7 +405,8 @@ class XiboClient:
                 display_group_ids=[display_group_id],
                 hours_from_now=0,  # Start now
                 duration_hours=duration_hours,
-                name=schedule_name
+                name=schedule_name,
+                is_priority=True  # Set as priority to ensure it displays immediately
             )
             
             event_id = schedule_result.get('eventId')
@@ -499,7 +500,8 @@ class XiboClient:
     
     def schedule_media_relative(self, media_id: int, display_group_ids: List[int],
         hours_from_now: int = 0, duration_hours: int = 24,
-        name: Optional[str] = None) -> Dict[str, Any]:
+        name: Optional[str] = None, is_priority: bool = False
+    ) -> Dict[str, Any]:
         """
         Schedule a media item with relative timing (from now).
         
@@ -523,7 +525,7 @@ class XiboClient:
         
         self._log(f"Scheduling media {media_id} from {from_dt} to {to_dt}")
         
-        return self.schedule_media(media_id, display_group_ids, from_dt, to_dt, name)
+        return self.schedule_media(media_id, display_group_ids, from_dt, to_dt, name, is_priority=is_priority)
     
     def get_display_groups(self) -> List[Dict[str, Any]]:
         """
