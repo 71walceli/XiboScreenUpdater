@@ -361,7 +361,8 @@ class XiboClient:
         return None
     
     def upload_and_set_screen(self, file_path: str, screen_name: str, 
-                             duration_hours: int = 24) -> bool:
+            duration_hours: int = 24
+        ) -> bool:
         """
         Complete workflow: upload media and schedule it to a screen.
         
@@ -495,8 +496,8 @@ class XiboClient:
         return result
     
     def schedule_media_relative(self, media_id: int, display_group_ids: List[int],
-                               hours_from_now: int = 0, duration_hours: int = 24,
-                               name: Optional[str] = None) -> Dict[str, Any]:
+        hours_from_now: int = 0, duration_hours: int = 24,
+        name: Optional[str] = None) -> Dict[str, Any]:
         """
         Schedule a media item with relative timing (from now).
         
