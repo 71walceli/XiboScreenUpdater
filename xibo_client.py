@@ -420,7 +420,9 @@ class XiboClient:
             self._log(f"  - Media ID: {media_id}")
             self._log(f"  - Display Group ID: {display_group_id}")
             self._log(f"  - Schedule Event ID: {event_id}")
+            self._log(f'  - New Campaign ID: {campaign_id}')
             self._log(f"  - Duration: {duration_hours} hours")
+            self._log(f"  - Scheduled for display: {screen_name}")
             
             return True
             
