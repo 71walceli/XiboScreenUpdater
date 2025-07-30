@@ -77,6 +77,15 @@ def test_xibo_connection():
             height = resolution.get('height', 0)
             print(f"   - {width}x{height} (ID: {resolution.get('resolutionId')})")
         
+        # Test getting display groups
+        print("\n7. Getting display groups...")
+        display_groups = client.get_display_groups()
+        print(f"✅ Found {len(display_groups)} display groups:")
+        for group in display_groups[:5]:  # Show first 5
+            print(f"   - {group.get('displayGroup')} (ID: {group.get('displayGroupId')})")
+        if len(display_groups) > 5:
+            print(f"   ... and {len(display_groups) - 5} more")
+        
         print("\n✅ All tests passed! Xibo client is working correctly.")
         return True
         
@@ -86,18 +95,18 @@ def test_xibo_connection():
         traceback.print_exc()
         return False
 
-def test_upload_workflow():
-    """Test the complete upload and screen setting workflow."""
+
+def test_complete_workflow():
+    """Test the complete workflow using the main function."""
     try:
         print("\n" + "="*60)
-        print("Testing complete workflow (upload + set screen)...")
+        print("Testing complete workflow (upload_and_set_screen)...")
         print("="*60)
         
         # Check if test image exists
-        test_file = "data/Screenshot_20250205_225547.png"
+        test_file = "data/Screenshot_20250326_145344.png"
         if not os.path.exists(test_file):
             print(f"❌ Test image not found: {test_file}")
-            print("   Download a test image first using the NextCloud client")
             return False
         
         # Load configuration
@@ -109,7 +118,7 @@ def test_upload_workflow():
             print("❌ Authentication failed!")
             return False
         
-        # Get available displays to test with
+        # Get displays to test with
         displays = client.get_displays()
         if not displays:
             print("❌ No displays found! Please add a display to Xibo first.")
@@ -120,35 +129,24 @@ def test_upload_workflow():
         display_name = test_display.get('display')
         print(f"Using display for test: {display_name}")
         
-        # Test upload only (without setting screen) to avoid affecting real displays
-        print(f"\nTesting media upload...")
-        media_result = client.upload_media(test_file, name=f"Upload {test_file.split('/')[-1]}")
-        media_id = media_result.get('files')[0].get('mediaId') if media_result.get('files') else None
+        # Test complete workflow (schedule for short duration for testing)
+        print(f"\nTesting complete workflow...")
+        success = client.upload_and_set_screen(
+            file_path=test_file,
+            screen_name=display_name,
+            duration_hours=1  # Short duration for testing
+        )
         
-        if media_id:
-            print(f"✅ Media uploaded successfully! Media ID: {media_id}")
-            
-            # Test layout creation
-            print(f"\nTesting layout creation...")
-            layout_result = client.create_fullscreen_layout(media_id, name="Test Layout from Python Client")
-            layout_id = layout_result.get('layoutId')
-            
-            if layout_id:
-                print(f"✅ Layout created successfully! Layout ID: {layout_id}")
-                print(f"\n✅ Upload workflow test completed successfully!")
-                print(f"   Note: Layout was created but not set as default to avoid affecting displays.")
-                print(f"   You can manually test setting it as default by calling:")
-                print(f"   client.set_display_default_layout({test_display.get('displayId')}, {layout_id})")
-                return True
-            else:
-                print("❌ Failed to create layout")
-                return False
+        if success:
+            print(f"✅ Complete workflow test successful!")
+            print(f"   Media uploaded and scheduled to '{display_name}' for 1 hour")
+            return True
         else:
-            print("❌ Failed to upload media")
+            print("❌ Complete workflow test failed")
             return False
             
     except Exception as e:
-        print(f"❌ Workflow test failed: {e}")
+        print(f"❌ Complete workflow test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -159,7 +157,12 @@ if __name__ == "__main__":
     
     # Test basic connection
     if test_xibo_connection():
-        # Test upload workflow if basic tests pass
-        test_upload_workflow()
+        # Test scheduling workflow if basic tests pass
+        print("\n" + "="*60)
+        print("Running additional workflow tests...")
+        print("="*60)
+        
+        #test_scheduling_workflow()
+        test_complete_workflow()
     else:
         print("\n❌ Basic tests failed. Please check your Xibo configuration.")

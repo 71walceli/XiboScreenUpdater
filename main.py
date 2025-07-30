@@ -62,10 +62,24 @@ def get_nextcloud_files_detailed(config):
     )
 
 def get_new_files(config):
-    files = get_nextcloud_files(config)
-    new_files = [f for f in files if f not in seen_files]
-    for f in new_files:
-        seen_files.add(f)
+    """
+    Get new files from NextCloud that haven't been seen before.
+    
+    Args:
+        config (dict): Configuration dictionary
+        
+    Returns:
+        list: List of new file info dictionaries
+    """
+    files = get_nextcloud_files_detailed(config)
+    new_files = []
+    
+    for file_info in files:
+        file_name = file_info['name']
+        if file_name not in seen_files:
+            seen_files.add(file_name)
+            new_files.append(file_info)
+    
     return new_files
 
 def download_file(filename, config):
@@ -95,21 +109,40 @@ def download_file(filename, config):
     local_path = client.download_file(file_path, filename)
     return local_path
 
-def xibo_authenticate():
-    response = requests.post(f"{XIBO_API_BASE}/authorize/access_token", data={
-        "grant_type": "password",
-        "client_id": XIBO_CLIENT_ID,
-        "client_secret": XIBO_CLIENT_SECRET,
-        "username": XIBO_USER,
-        "password": XIBO_PASS
-    })
-    return response.json()["access_token"]
-
-def upload_to_xibo(filepath, token):
-    files = {'files[]': open(filepath, 'rb')}
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.post(f"{XIBO_API_BASE}/library", files=files, headers=headers)
-    return response.json()
+def upload_and_set_xibo_screen(filepath: str, config: dict, screen_name: str = None) -> bool:
+    """
+    Upload a file to Xibo and optionally set it as default for a specific screen.
+    
+    Args:
+        filepath (str): Path to the file to upload
+        config (dict): Configuration dictionary
+        screen_name (str, optional): Name of the screen to set as default
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Create Xibo client from config
+        xibo_client = create_xibo_client_from_config(config, debug=True)
+        
+        # Authenticate
+        if not xibo_client.authenticate():
+            print(f"Failed to authenticate with Xibo")
+            return False
+        
+        if screen_name:
+            # Complete workflow: upload + create layout + set as default
+            print(f"Uploading {filepath} and setting as default for screen '{screen_name}'")
+            return xibo_client.upload_and_set_screen(filepath, screen_name)
+        else:
+            # Just upload the media
+            print(f"Uploading {filepath} to Xibo library")
+            result = xibo_client.upload_media(filepath)
+            return result.get('mediaId') is not None
+            
+    except Exception as e:
+        print(f"Error uploading to Xibo: {e}")
+        return False
 
 def load_config(file_path):
     import yaml
@@ -117,20 +150,58 @@ def load_config(file_path):
         return yaml.safe_load(file)
 
 def main():
+    """
+    Main function that monitors NextCloud for new files and uploads them to Xibo.
+    """
     config = load_config("config/example.yaml")
+    screen_name = config.get('name', 'xibo_screen_1')  # Use the name from config
+
+    print(f"Starting file monitor for screen: {screen_name}")
+    print(f"Monitoring NextCloud path: {config['copy_from']['path']}")
+    print(f"Extensions: {config['copy_from']['extensions']}")
+    print(f"Poll interval: {POLL_INTERVAL} seconds")
+    print("-" * 50)
 
     while True:
-        new_files = get_new_files(config)
-        if new_files:
-            print(f"New files found: {new_files}")
-            """ 
-            token = xibo_authenticate()
-            for f in new_files:
-                downloaded = download_file(f, config)
-                if downloaded:
-                    upload_to_xibo(downloaded, token)
-                    # Optional: update layout/display
-            """
+        try:
+            new_files = get_new_files(config)
+            if new_files:
+                print(f"New files found: {[f['name'] for f in new_files]}")
+                
+                for file_info in new_files:
+                    file_name = file_info['name']
+                    print(f"Processing: {file_name}")
+                    
+                    # Download file from NextCloud
+                    try:
+                        downloaded_path = download_file(file_name, config)
+                        if downloaded_path:
+                            print(f"Downloaded: {downloaded_path}")
+                            
+                            # Upload to Xibo and set as default for screen
+                            success = upload_and_set_xibo_screen(
+                                downloaded_path, 
+                                config, 
+                                screen_name
+                            )
+                            
+                            if success:
+                                print(f"✅ Successfully processed {file_name}")
+                            else:
+                                print(f"❌ Failed to upload {file_name} to Xibo")
+                        else:
+                            print(f"❌ Failed to download {file_name}")
+                            
+                    except Exception as e:
+                        print(f"❌ Error processing {file_name}: {e}")
+                
+                print("-" * 50)
+            else:
+                print("No new files found")
+                
+        except Exception as e:
+            print(f"Error in main loop: {e}")
+            
         sleep(POLL_INTERVAL)
 
 if __name__ == "__main__":

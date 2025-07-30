@@ -182,7 +182,15 @@ class XiboClient:
             response = self._make_request('POST', 'library', files=files, data=data)
             
         result = response.json()
-        self._log(f"Media uploaded successfully. Media ID: {result.get('mediaId')}")
+        
+        # Handle different response formats
+        media_id = None
+        if 'files' in result and len(result['files']) > 0:
+            result = result['files'][0]
+        else:
+            return None
+        
+        self._log(f"Media uploaded successfully. Media ID: {result['mediaId']}")
         return result
     
     def get_media_list(self, media_name: Optional[str] = None, media_type: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -353,14 +361,14 @@ class XiboClient:
         return None
     
     def upload_and_set_screen(self, file_path: str, screen_name: str, 
-                             layout_name: Optional[str] = None) -> bool:
+                             duration_hours: int = 24) -> bool:
         """
-        Complete workflow: upload media, create layout, and set as default for screen.
+        Complete workflow: upload media and schedule it to a screen.
         
         Args:
             file_path (str): Path to the media file to upload
             screen_name (str): Name of the screen/display to update
-            layout_name (str, optional): Name for the layout. Defaults to filename
+            duration_hours (int): How long to schedule the media for (default: 24 hours)
             
         Returns:
             bool: True if successful, False otherwise
@@ -375,38 +383,42 @@ class XiboClient:
                 self._log("Failed to get media ID from upload response")
                 return False
             
-            # Step 2: Create fullscreen layout
+            # Step 2: Find display group for the screen
+            display_group_id = self.find_display_group_by_display_name(screen_name)
+            if not display_group_id:
+                self._log(f"Could not find display group for screen '{screen_name}'")
+                return False
+            
+            # Step 3: Schedule the media (starting now)
             filename = os.path.splitext(os.path.basename(file_path))[0]
-            layout_title = layout_name or f"Layout for {filename}"
+            schedule_name = f"Auto-scheduled: {filename}"
             
-            layout_result = self.create_fullscreen_layout(media_id, layout_title)
-            layout_id = layout_result.get('layoutId')
             
-            if not layout_id:
-                self._log("Failed to get layout ID from create response")
+            # Create a fullscreen layout for the media, necessary to render the media upliaded
+            fullscreen_layout = self.create_fullscreen_layout(media_id, name=schedule_name)
+            # It was observed that a fullscreen layout, when created, also created a campaign record.
+            campaign_id = fullscreen_layout.get('campaignId')   # Get the campaign ID from the layout
+
+            schedule_result = self.schedule_media_relative(
+                media_id=campaign_id,
+                display_group_ids=[display_group_id],
+                hours_from_now=0,  # Start now
+                duration_hours=duration_hours,
+                name=schedule_name
+            )
+            
+            event_id = schedule_result.get('eventId')
+            if not event_id:
+                self._log("Failed to get event ID from schedule response")
                 return False
             
-            # Step 3: Find display by name
-            display = self.find_display_by_name(screen_name)
-            if not display:
-                self._log(f"Display '{screen_name}' not found")
-                return False
+            self._log(f"Workflow completed successfully!")
+            self._log(f"  - Media ID: {media_id}")
+            self._log(f"  - Display Group ID: {display_group_id}")
+            self._log(f"  - Schedule Event ID: {event_id}")
+            self._log(f"  - Duration: {duration_hours} hours")
             
-            display_id = display.get('displayId')
-            if not display_id:
-                self._log("Failed to get display ID")
-                return False
-            
-            # Step 4: Set as default layout
-            success = self.set_display_default_layout(display_id, layout_id)
-            
-            if success:
-                self._log(f"Workflow completed successfully!")
-                self._log(f"  - Media ID: {media_id}")
-                self._log(f"  - Layout ID: {layout_id}")
-                self._log(f"  - Display ID: {display_id}")
-            
-            return success
+            return True
             
         except Exception as e:
             self._log(f"Workflow failed: {e}")
@@ -439,6 +451,119 @@ class XiboClient:
         except Exception as e:
             self._log(f"Failed to get resolutions: {e}")
             return []
+    
+    def schedule_media(self, media_id: int, display_group_ids: List[int], 
+                      from_dt: str, to_dt: str, name: Optional[str] = None,
+                      day_part_id: int = 1, is_priority: bool = False) -> Dict[str, Any]:
+        """
+        Schedule a media item to display groups.
+        
+        Args:
+            media_id (int): ID of the media to schedule
+            display_group_ids (List[int]): List of display group IDs to schedule to
+            from_dt (str): Start date/time in format 'YYYY-MM-DD HH:MM:SS'
+            to_dt (str): End date/time in format 'YYYY-MM-DD HH:MM:SS'
+            name (str, optional): Name for the schedule event
+            day_part_id (int): Day part ID (default: 1 for custom)
+            is_priority (bool): Whether this is a priority event
+            
+        Returns:
+            dict: Schedule response data
+        """
+        self._log(f"Scheduling media {media_id} to display groups {display_group_ids}")
+        
+        # Prepare form data similar to the curl command
+        data = {
+            'name': name or '',
+            'eventTypeId': 7,  # Schedule full screen media content
+            'fromDt': from_dt,
+            'toDt': to_dt,
+            'fullScreenCampaignId': media_id,  # Use media_id as campaign ID for media events
+            'displayOrder': 0,
+            'isPriority': 1 if is_priority else '',
+            'dayPartId': day_part_id,
+        }
+        
+        # Add display group IDs (array format)
+        for i, group_id in enumerate(display_group_ids):
+            data[f'displayGroupIds[{i}]'] = group_id
+        
+        response = self._make_request('POST', 'schedule', data=data)
+        result = response.json()
+        
+        self._log(f"Media scheduled successfully. Event ID: {result.get('eventId')}")
+        return result
+    
+    def schedule_media_relative(self, media_id: int, display_group_ids: List[int],
+                               hours_from_now: int = 0, duration_hours: int = 24,
+                               name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Schedule a media item with relative timing (from now).
+        
+        Args:
+            media_id (int): ID of the media to schedule
+            display_group_ids (List[int]): List of display group IDs to schedule to
+            hours_from_now (int): Hours from now to start (default: 0 = now)
+            duration_hours (int): Duration in hours (default: 24 hours)
+            name (str, optional): Name for the schedule event
+            
+        Returns:
+            dict: Schedule response data
+        """
+        from datetime import datetime, timedelta
+        
+        start_time = datetime.now() + timedelta(hours=hours_from_now)
+        end_time = start_time + timedelta(hours=duration_hours)
+        
+        from_dt = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        to_dt = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        self._log(f"Scheduling media {media_id} from {from_dt} to {to_dt}")
+        
+        return self.schedule_media(media_id, display_group_ids, from_dt, to_dt, name)
+    
+    def get_display_groups(self) -> List[Dict[str, Any]]:
+        """
+        Get list of display groups.
+        
+        Returns:
+            list: List of display group objects
+        """
+        try:
+            response = self._make_request('GET', 'displaygroup')
+            return response.json()
+        except Exception as e:
+            self._log(f"Failed to get display groups: {e}")
+            return []
+    
+    def find_display_group_by_display_name(self, display_name: str) -> Optional[int]:
+        """
+        Find display group ID for a specific display name.
+        This looks for a display and returns its default display group.
+        
+        Args:
+            display_name (str): Name of the display
+            
+        Returns:
+            int or None: Display group ID if found, None otherwise
+        """
+        display = self.find_display_by_name(display_name)
+        if display:
+            # Try to get display group from display info
+            display_group_id = display.get('displayGroupId')
+            if display_group_id:
+                return display_group_id
+            
+            # If not in display info, try to find by display ID
+            display_id = display.get('displayId')
+            if display_id:
+                display_groups = self.get_display_groups()
+                for group in display_groups:
+                    # Look for groups that contain this display
+                    if display_id in group.get('displays', []):
+                        return group.get('displayGroupId')
+        
+        return None
 
 
 def create_xibo_client_from_config(config: Dict[str, Any], debug: bool = False) -> XiboClient:
