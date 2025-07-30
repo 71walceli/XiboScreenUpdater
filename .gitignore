@@ -1,5 +1,4 @@
 # Miscellaneous files
-.venv
 data
 
 # Byte-compiled / optimized / DLL files
@@ -140,6 +139,7 @@ celerybeat.pid
 
 # Environments
 .env
+*.env
 .envrc
 .venv
 env/
