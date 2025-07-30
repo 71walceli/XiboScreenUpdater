@@ -572,6 +572,76 @@ class XiboClient:
         
         return None
 
+    def get_display_group_events(self, display_group_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all scheduled events for a display group.
+        
+        Args:
+            display_group_id (int): ID of the display group
+            
+        Returns:
+            list: List of event objects
+        """
+        date = time.strftime('%Y-%m-%d %H:%M:%S')
+        try:
+            response = self._make_request('GET', f'schedule/{display_group_id}/events', params={'date': date})
+            result = response.json()
+            return result.get('events', [])
+        except Exception as e:
+            self._log(f"Failed to get events for display group {display_group_id}: {e}")
+            return []
+    
+    def delete_schedule_event(self, event_id: int) -> bool:
+        """
+        Delete a scheduled event.
+        
+        Args:
+            event_id (int): ID of the event to delete
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            self._make_request('DELETE', f'schedule/{event_id}')
+            self._log(f"Deleted schedule event {event_id}")
+            return True
+        except Exception as e:
+            self._log(f"Failed to delete schedule event {event_id}: {e}")
+            return False
+    
+    def delete_auto_scheduled_events(self, display_group_id: int, exclude_event_id: Optional[int] = None) -> int:
+        """
+        Delete all events created by this script (with "Auto-scheduled:" prefix) for a display group.
+        
+        Args:
+            display_group_id (int): ID of the display group
+            exclude_event_id (int, optional): Event ID to exclude from deletion (current event)
+            
+        Returns:
+            int: Number of events deleted
+        """
+        self._log(f"Deleting auto-scheduled events for display group {display_group_id}")
+        
+        events = self.get_display_group_events(display_group_id)
+        deleted_count = 0
+        
+        for event in events:
+            event_id = event.get('eventId')
+            event_name = event.get('event', '')
+            
+            # Skip the current event we just created
+            if exclude_event_id and event_id == exclude_event_id:
+                continue
+            
+            # Delete events that start with "Auto-scheduled:"
+            if self.delete_schedule_event(event_id):
+                # TODO Refine crieria for deleting evnts, subh as by tags
+                deleted_count += 1
+                self._log(f"Deleted auto-scheduled event: {event_name}")
+        
+        self._log(f"Deleted {deleted_count} auto-scheduled events")
+        return deleted_count
+
     def force_refresh_display(self, display_id: int) -> bool:
         """
         Force refresh a display to apply changes immediately.
