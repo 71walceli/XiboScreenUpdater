@@ -413,6 +413,8 @@ class XiboClient:
                 self._log("Failed to get event ID from schedule response")
                 return False
             
+            self.force_refresh_display(display_group_id)  # Refresh display to apply changes
+            
             self._log(f"Workflow completed successfully!")
             self._log(f"  - Media ID: {media_id}")
             self._log(f"  - Display Group ID: {display_group_id}")
@@ -565,6 +567,26 @@ class XiboClient:
                         return group.get('displayGroupId')
         
         return None
+
+    def force_refresh_display(self, display_id: int) -> bool:
+        """
+        Force refresh a display to apply changes immediately.
+        
+        Args:
+            display_id (int): ID of the display to refresh
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        self._log(f"Refreshing display {display_id}")
+        
+        try:
+            self._make_request('POST', f'display/{display_id}/action/collectNow')
+            self._log(f"Display {display_id} refreshed successfully")
+            return True
+        except Exception as e:
+            self._log(f"Failed to refresh display {display_id}: {e}")
+            return False
 
 
 def create_xibo_client_from_config(config: Dict[str, Any], debug: bool = False) -> XiboClient:
