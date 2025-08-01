@@ -1,5 +1,6 @@
 import os
-import requests
+import shutil
+import tempfile
 from datetime import datetime
 from time import sleep
 from requests.auth import HTTPBasicAuth
@@ -167,6 +168,8 @@ def main():
     print(f"Poll interval: {poll_interval} seconds")
     print("-" * 50)
 
+    tmp_folder = tempfile.mkdtemp("xibo_upload")
+
     while True:
         try:
             new_files = get_new_files(config)
@@ -183,7 +186,7 @@ def main():
                     
                     # Download file from NextCloud
                     try:
-                        downloaded_path = download_file(file_name, config)
+                        downloaded_path = download_file(os.path.join(tmp_folder, file_name), config)
                         if downloaded_path:
                             print(f"Downloaded: {downloaded_path}")
                             
@@ -193,6 +196,7 @@ def main():
                                 config, 
                                 display_name
                             )
+                            os.remove(downloaded_path)  # Clean up downloaded files after upload
                             
                             if success:
                                 print(f"✅ Successfully processed {file_name}")
@@ -210,6 +214,8 @@ def main():
                 
         except Exception as e:
             print(f"Error in main loop: {e}")
+        finally:
+            shutil.rmtree(tmp_folder, ignore_errors=True)
             
         sleep(poll_interval)
 
