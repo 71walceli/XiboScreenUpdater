@@ -82,13 +82,14 @@ def get_new_files(config):
     
     return new_files
 
-def download_file(filename, config):
+def download_file(filename, config, destination=None):
     """
     Download a file from NextCloud using the NextCloud client.
     
     Args:
-        filename (str): Name of the file to download
-        config (dict): Configuration dictionary
+        filename (str): Nextcloud Name of the file to download
+        config (dict): Nextcloud Configuration dictionary
+        destination (str, optional): Local path to save the downloaded file. If None, uses filename.
         
     Returns:
         str: Path to the downloaded file
@@ -106,7 +107,8 @@ def download_file(filename, config):
     file_path = f"{server_config['path']}/{filename}"
     
     # Download the file
-    local_path = client.download_file(file_path, filename)
+    destination = destination or filename
+    local_path = client.download_file(file_path, destination)
     return local_path
 
 def upload_and_set_xibo_screen(filepath: str, config: dict, screen_name: str = None) -> bool:
@@ -167,9 +169,10 @@ def main():
     print(f"Monitoring NextCloud path: {config['copy_from']['path']}")
     print(f"Extensions: {config['copy_from']['extensions']}")
     print(f"Poll interval: {poll_interval} seconds")
+    
+    tmp_folder = tempfile.mkdtemp("__xibo_upload")
+    print(f"Temporary folder created: {tmp_folder}")
     print("-" * 50)
-
-    tmp_folder = tempfile.mkdtemp("xibo_upload")
 
     while True:
         try:
@@ -187,7 +190,9 @@ def main():
                     
                     # Download file from NextCloud
                     try:
-                        downloaded_path = download_file(os.path.join(tmp_folder, file_name), config)
+                        new_file_path = os.path.join(tmp_folder, file_name)
+                        print(f"Downloading {file_name} to {new_file_path}")
+                        downloaded_path = download_file(file_name, config)
                         if downloaded_path:
                             print(f"Downloaded: {downloaded_path}")
                             
