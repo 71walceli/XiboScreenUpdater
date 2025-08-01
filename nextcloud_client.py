@@ -4,6 +4,7 @@ from requests.auth import HTTPBasicAuth
 from urllib.parse import urljoin, unquote
 import os
 import time
+from datetime import datetime
 
 
 class NextCloudClient:
@@ -149,7 +150,7 @@ class NextCloudClient:
                 # Get last modified date
                 lastmod_elem = prop.find('d:getlastmodified', namespaces)
                 if lastmod_elem is not None:
-                    file_info['last_modified'] = lastmod_elem.text
+                    file_info['last_modified'] = datetime.strptime(lastmod_elem.text, '%a, %d %b %Y %H:%M:%S %Z')
                 
                 # Get content length (file size)
                 size_elem = prop.find('d:getcontentlength', namespaces)

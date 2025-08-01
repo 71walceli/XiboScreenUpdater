@@ -155,6 +155,8 @@ def main():
     display_name = config['project_to']['display'].get('name')  # Use the name from config
     poll_interval = config['copy_from'].get('poll_interval', 10)  # Default to 10 seconds
 
+    start_time = datetime.utcnow()
+
     if not display_name:
         print("❌ Screen name not found in config. Please check your configuration.")
         exit(1)
@@ -172,6 +174,10 @@ def main():
                 print(f"New files found: {[f['name'] for f in new_files]}")
                 
                 for file_info in new_files:
+                    # Skip files modified before the script started
+                    if file_info['last_modified'] <= start_time:
+                        continue
+                    
                     file_name = file_info['name']
                     print(f"Processing: {file_name}")
                     
