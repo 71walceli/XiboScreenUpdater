@@ -4,7 +4,7 @@ from requests.auth import HTTPBasicAuth
 from urllib.parse import urljoin, unquote
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class NextCloudClient:
@@ -58,15 +58,18 @@ class NextCloudClient:
             'Content-Type': 'application/xml'
         }
         
-        # Basic PROPFIND body to get file properties
+        # Basic PROPFIND body to get file properties including upload time
         propfind_body = '''<?xml version="1.0"?>
-        <d:propfind xmlns:d="DAV:">
+        <d:propfind xmlns:d="DAV:" xmlns:nc="http://nextcloud.org/ns">
             <d:prop>
                 <d:getlastmodified/>
                 <d:getcontentlength/>
                 <d:resourcetype/>
                 <d:getetag/>
                 <d:getcontenttype/>
+                <d:creationdate/>
+                <nc:creation_time/>
+                <nc:upload_time/>
             </d:prop>
         </d:propfind>'''
         
@@ -150,7 +153,43 @@ class NextCloudClient:
                 # Get last modified date
                 lastmod_elem = prop.find('d:getlastmodified', namespaces)
                 if lastmod_elem is not None:
-                    file_info['last_modified'] = datetime.strptime(lastmod_elem.text, '%a, %d %b %Y %H:%M:%S %Z')
+                    try:
+                        file_info['last_modified'] = datetime.strptime(lastmod_elem.text, '%a, %d %b %Y %H:%M:%S %Z')
+                    except ValueError:
+                        # Fallback if the date format is different
+                        file_info['last_modified_raw'] = lastmod_elem.text
+                
+                # Get creation date (timezone-aware)
+                creation_elem = prop.find('d:creationdate', namespaces)
+                if creation_elem is not None:
+                    try:
+                        # Parse ISO 8601 format with timezone
+                        creation_date_str = creation_elem.text
+                        # Handle different ISO 8601 formats
+                        if '+' in creation_date_str or creation_date_str.endswith('Z'):
+                            file_info['creation_date'] = datetime.fromisoformat(creation_date_str.replace('Z', '+00:00'))
+                        else:
+                            file_info['creation_date'] = datetime.fromisoformat(creation_date_str)
+                    except (ValueError, AttributeError):
+                        file_info['creation_date_raw'] = creation_elem.text
+                
+                # Get creation time as timestamp
+                creation_time_elem = prop.find('nc:creation_time', namespaces)
+                if creation_time_elem is not None:
+                    try:
+                        timestamp = int(creation_time_elem.text)
+                        file_info['creation_time'] = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                    except (ValueError, TypeError):
+                        file_info['creation_time_raw'] = creation_time_elem.text
+                
+                # Get upload time as timestamp (this is what we need!)
+                upload_time_elem = prop.find('nc:upload_time', namespaces)
+                if upload_time_elem is not None:
+                    try:
+                        timestamp = int(upload_time_elem.text)
+                        file_info['upload_date'] = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                    except (ValueError, TypeError):
+                        file_info['upload_date_raw'] = upload_time_elem.text
                 
                 # Get content length (file size)
                 size_elem = prop.find('d:getcontentlength', namespaces)
@@ -259,3 +298,52 @@ class NextCloudClient:
         """
         files = self.list_files(directory_path, extensions)
         return [file_info['name'] for file_info in files]
+
+
+if __name__ == "__main__":
+    # Simple test when running the module directly
+    import yaml
+    
+    def load_config(file_path):
+        with open(file_path, 'r') as file:
+            return yaml.safe_load(file)
+    
+    try:
+        config = load_config("config/example.yaml")
+        server_config = config['copy_from']
+        
+        client = NextCloudClient(
+            server_config['server'],
+            server_config['auth']['user'],
+            server_config['auth']['password']
+        )
+        
+        print(f"Testing NextCloud connection to: {server_config['server']}")
+        print(f"Directory: {server_config['path']}")
+        print("-" * 50)
+        
+        files = client.get_files(
+            directory_path=server_config['path'],
+            extensions=server_config['extensions']
+        )
+        
+        if files:
+            print(f"Found {len(files)} files:")
+            for file_info in files:
+                print(f"  - {file_info['name']}")
+                if 'size' in file_info:
+                    print(f"    Size: {file_info['size']} bytes")
+                if 'last_modified' in file_info:
+                    print(f"    Modified: {file_info['last_modified']}")
+                if 'upload_date' in file_info:
+                    print(f"    Uploaded: {file_info['upload_date']}")
+                if 'creation_date' in file_info:
+                    print(f"    Created: {file_info['creation_date']}")
+                if 'content_type' in file_info:
+                    print(f"    Type: {file_info['content_type']}")
+                print()
+        else:
+            print("No files found or connection failed.")
+            
+    except Exception as e:
+        print(f"Error: {e}")
