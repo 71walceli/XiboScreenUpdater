@@ -182,7 +182,7 @@ def main():
                 
                 for file_info in new_files:
                     # Skip files modified before the script started
-                    if file_info['last_modified'] <= start_time:
+                    if file_info['upload_date'] <= start_time:
                         continue
                     
                     file_name = file_info['name']
