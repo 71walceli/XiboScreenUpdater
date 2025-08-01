@@ -217,7 +217,7 @@ def main():
                 
                 print("-" * 50)
             else:
-                print("No new files found")
+                pass
                 
         except Exception as e:
             print(f"Error in main loop: {e}")
