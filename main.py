@@ -7,8 +7,6 @@ from nextcloud_client import NextCloudClient
 from xibo_client import create_xibo_client_from_config
 import yaml
 
-POLL_INTERVAL = 300  # 5 minutes
-
 seen_files = set()
 
 def get_nextcloud_files(config):
@@ -154,12 +152,17 @@ def main():
     Main function that monitors NextCloud for new files and uploads them to Xibo.
     """
     config = load_config("config/example.yaml")
-    screen_name = config.get('name', 'xibo_screen_1')  # Use the name from config
+    display_name = config['project_to']['display'].get('name')  # Use the name from config
+    poll_interval = config['copy_from'].get('poll_interval', 10)  # Default to 10 seconds
 
-    print(f"Starting file monitor for screen: {screen_name}")
+    if not display_name:
+        print("❌ Screen name not found in config. Please check your configuration.")
+        exit(1)
+
+    print(f"Starting file monitor for screen: {display_name}")
     print(f"Monitoring NextCloud path: {config['copy_from']['path']}")
     print(f"Extensions: {config['copy_from']['extensions']}")
-    print(f"Poll interval: {POLL_INTERVAL} seconds")
+    print(f"Poll interval: {poll_interval} seconds")
     print("-" * 50)
 
     while True:
@@ -182,7 +185,7 @@ def main():
                             success = upload_and_set_xibo_screen(
                                 downloaded_path, 
                                 config, 
-                                screen_name
+                                display_name
                             )
                             
                             if success:
@@ -202,7 +205,7 @@ def main():
         except Exception as e:
             print(f"Error in main loop: {e}")
             
-        sleep(POLL_INTERVAL)
+        sleep(poll_interval)
 
 if __name__ == "__main__":
     main()
