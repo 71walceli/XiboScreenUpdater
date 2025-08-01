@@ -154,12 +154,14 @@ class NextCloudClient:
                 lastmod_elem = prop.find('d:getlastmodified', namespaces)
                 if lastmod_elem is not None:
                     try:
-                        file_info['last_modified'] = datetime.strptime(lastmod_elem.text, '%a, %d %b %Y %H:%M:%S %Z')
+                        # Parse and convert to UTC timezone-naive
+                        dt = datetime.strptime(lastmod_elem.text, '%a, %d %b %Y %H:%M:%S %Z')
+                        file_info['last_modified'] = dt.replace(tzinfo=timezone.utc).replace(tzinfo=None)
                     except ValueError:
                         # Fallback if the date format is different
                         file_info['last_modified_raw'] = lastmod_elem.text
                 
-                # Get creation date (timezone-aware)
+                # Get creation date (convert to UTC timezone-naive)
                 creation_elem = prop.find('d:creationdate', namespaces)
                 if creation_elem is not None:
                     try:
@@ -167,9 +169,13 @@ class NextCloudClient:
                         creation_date_str = creation_elem.text
                         # Handle different ISO 8601 formats
                         if '+' in creation_date_str or creation_date_str.endswith('Z'):
-                            file_info['creation_date'] = datetime.fromisoformat(creation_date_str.replace('Z', '+00:00'))
+                            dt = datetime.fromisoformat(creation_date_str.replace('Z', '+00:00'))
                         else:
-                            file_info['creation_date'] = datetime.fromisoformat(creation_date_str)
+                            dt = datetime.fromisoformat(creation_date_str)
+                        # Convert to UTC and make timezone-naive
+                        if dt.tzinfo is not None:
+                            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+                        file_info['creation_date'] = dt
                     except (ValueError, AttributeError):
                         file_info['creation_date_raw'] = creation_elem.text
                 
@@ -178,7 +184,8 @@ class NextCloudClient:
                 if creation_time_elem is not None:
                     try:
                         timestamp = int(creation_time_elem.text)
-                        file_info['creation_time'] = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                        # Create UTC timezone-naive datetime
+                        file_info['creation_time'] = datetime.fromtimestamp(timestamp, tz=timezone.utc).replace(tzinfo=None)
                     except (ValueError, TypeError):
                         file_info['creation_time_raw'] = creation_time_elem.text
                 
@@ -187,7 +194,8 @@ class NextCloudClient:
                 if upload_time_elem is not None:
                     try:
                         timestamp = int(upload_time_elem.text)
-                        file_info['upload_date'] = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                        # Create UTC timezone-naive datetime
+                        file_info['upload_date'] = datetime.fromtimestamp(timestamp, tz=timezone.utc).replace(tzinfo=None)
                     except (ValueError, TypeError):
                         file_info['upload_date_raw'] = upload_time_elem.text
                 
