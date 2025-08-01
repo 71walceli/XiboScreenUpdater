@@ -3,6 +3,7 @@ import shutil
 import tempfile
 from datetime import datetime
 from time import sleep
+import traceback
 from requests.auth import HTTPBasicAuth
 from nextcloud_client import NextCloudClient
 from xibo_client import create_xibo_client_from_config
@@ -207,6 +208,7 @@ def main():
                             
                     except Exception as e:
                         print(f"❌ Error processing {file_name}: {e}")
+                        traceback.print_exc()
                 
                 print("-" * 50)
             else:
@@ -214,6 +216,7 @@ def main():
                 
         except Exception as e:
             print(f"Error in main loop: {e}")
+            traceback.print_exc()
         finally:
             shutil.rmtree(tmp_folder, ignore_errors=True)
             
