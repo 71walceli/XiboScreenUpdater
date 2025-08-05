@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xibo-screen-updater"
-version = "1.0.0"
-description = "Automated tool to monitor NextCloud for new files and upload them to Xibo CMS with flexible configuration loading"
+version = "2.0.0"
+description = "Automated tool to monitor NextCloud for new files and upload them to Xibo CMS with provider abstraction and robust architecture"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -54,7 +54,7 @@ test = [
 ]
 
 [project.scripts]
-xibo-screen-updater = "main:main"
+xibo-screen-updater = "main_new:main"
 test-xibo = "test_xibo:main"
 test-nextcloud = "test_nextcloud:main"
 
@@ -65,8 +65,8 @@ Issues = "https://github.com/71walceli/XiboScreenUpdater/issues"
 Documentation = "https://github.com/71walceli/XiboScreenUpdater#readme"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["*"]
+where = ["src"]
+include = ["xibo_screen_updater*"]
 exclude = ["tests*", "docs*", "*.egg-info"]
 
 [tool.setuptools.package-data]
