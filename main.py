@@ -1,6 +1,5 @@
 import os
-import shutil
-import tempfile
+import sys
 from datetime import datetime
 from time import sleep
 import traceback
@@ -8,7 +7,8 @@ from typing import Dict, List, Optional
 import argparse
 
 from config_manager import ConfigManager, ConfigurationError, resolve_config_path
-from nextcloud_client import NextCloudClient
+from file_processor import FileProcessor, ProcessingStats
+from logging_config import setup_logging, get_component_logger, LogContext
 from xibo_client import create_xibo_client_from_config
 
 class XiboScreenUpdater:
@@ -157,99 +157,27 @@ class XiboScreenUpdater:
 
 def main():
     """
-    Main function that monitors NextCloud for new files and uploads them to Xibo.
+    Main entry point for Xibo Screen Updater.
     """
-    
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Monitor NextCloud for new files and upload to Xibo')
     parser.add_argument('-c', '--config', type=str, help='Path to configuration file')
     args = parser.parse_args()
     
-    config_path = None
-    if args.config:
-        config_path = args.config
-    elif 'CONFIG_PATH' in os.environ:
-        config_path = os.environ['CONFIG_PATH']
-    else:
-        config_path = './config.yaml'
-    config = load_config(config_path)
-    display_name = config['project_to']['display'].get('name')  # Use the name from config
-    poll_interval = config['copy_from'].get('poll_interval', 10)  # Default to 10 seconds
-
-    start_time = datetime.utcnow()
-
-    if not display_name:
-        print("❌ Screen name not found in config. Please check your configuration.")
-        exit(1)
-
-    print(f"Starting file monitor for screen: {display_name}")
-    print(f"Monitoring NextCloud path: {config['copy_from']['path']}")
-    print(f"Extensions: {config['copy_from']['extensions']}")
-    print(f"Poll interval: {poll_interval} seconds")
-    
-    tmp_folder = tempfile.mkdtemp("__xibo_upload")
-    print(f"Temporary folder created: {tmp_folder}")
-    print("-" * 50)
-
-    latest_upload_date = start_time
-
-    while True:
-        try:
-            new_files = get_nextcloud_files_detailed(config)
-            if new_files:
-                processed_count = success_count = failed_count = 0
-                for file_info in new_files:
-                    # Skip files modified before the script started
-                    if file_info['upload_date'] <= latest_upload_date:
-                        continue
-                    
-                    processed_count += 1
-                    latest_upload_date = max(latest_upload_date, file_info['upload_date'])
-                    file_name = file_info['name']
-                    print(f"Processing: {file_name}")
-                    
-                    # Download file from NextCloud
-                    try:
-                        new_file_path = os.path.join(tmp_folder, file_name)
-                        print(f"Downloading {file_name} to {new_file_path}")
-                        downloaded_path = download_file(file_name, config)
-                        if downloaded_path:
-                            print(f"Downloaded: {downloaded_path}")
-                            
-                            # Upload to Xibo and set as default for screen
-                            success = upload_and_set_xibo_screen(
-                                downloaded_path, 
-                                config, 
-                                display_name
-                            )
-                            os.remove(downloaded_path)  # Clean up downloaded files after upload
-                            
-                            if success:
-                                success_count += 1
-                                print(f"✅ Successfully processed {file_name}")
-                            else:
-                                failed_count += 1
-                                print(f"❌ Failed to upload {file_name} to Xibo")
-                        else:
-                            failed_count += 1
-                            print(f"❌ Failed to download {file_name}")
-                            
-                    except Exception as e:
-                        failed_count += 1
-                        print(f"❌ Error processing {file_name}: {e}")
-                        traceback.print_exc()
-            else:
-                pass
-                
-        except Exception as e:
-            print(f"Error in main loop: {e}")
-            traceback.print_exc()
-        finally:
-            shutil.rmtree(tmp_folder, ignore_errors=True)
-            if processed_count > 0:
-                print(f"Processed {processed_count} files: {success_count} succeeded, {failed_count} failed")
-            
-        sleep(poll_interval)
+    try:
+        # Resolve configuration file path
+        config_path = resolve_config_path(args.config)
+        
+        # Create and run application
+        app = XiboScreenUpdater(config_path)
+        app.run()
+        
+    except ConfigurationError as e:
+        print(f"❌ Configuration error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Fatal error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
