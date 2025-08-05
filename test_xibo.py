@@ -104,7 +104,10 @@ def test_complete_workflow():
         print("="*60)
         
         # Check if test image exists
-        test_file = "data/Screenshot_20250326_145344.png"
+        if len(sys.argv) < 2:
+            print("❌ No test image provided! Please provide a path to an image file.")
+            return False
+        test_file = sys.argv[1]
         if not os.path.exists(test_file):
             print(f"❌ Test image not found: {test_file}")
             return False
