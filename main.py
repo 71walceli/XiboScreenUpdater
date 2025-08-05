@@ -62,27 +62,6 @@ def get_nextcloud_files_detailed(config):
         extensions=server_config['extensions']
     )
 
-def get_new_files(config):
-    """
-    Get new files from NextCloud that haven't been seen before.
-    
-    Args:
-        config (dict): Configuration dictionary
-        
-    Returns:
-        list: List of new file info dictionaries
-    """
-    files = get_nextcloud_files_detailed(config)
-    new_files = []
-    
-    for file_info in files:
-        file_name = file_info['name']
-        if file_name not in seen_files:
-            seen_files.add(file_name)
-            new_files.append(file_info)
-    
-    return new_files
-
 def download_file(filename, config, destination=None):
     """
     Download a file from NextCloud using the NextCloud client.
