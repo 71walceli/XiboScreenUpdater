@@ -54,7 +54,7 @@ test = [
 ]
 
 [project.scripts]
-xibo-screen-updater = "main_new:main"
+xibo-screen-updater = "main:main"
 test-xibo = "test_xibo:main"
 test-nextcloud = "test_nextcloud:main"
 
