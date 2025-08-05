@@ -147,7 +147,6 @@ def upload_and_set_xibo_screen(filepath: str, config: dict, screen_name: str = N
         return False
 
 def load_config(file_path):
-    import yaml
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
