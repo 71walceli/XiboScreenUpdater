@@ -3,6 +3,7 @@
 Test script for Xibo client functionality.
 """
 
+import sys
 import yaml
 import os
 from xibo_client import XiboClient, create_xibo_client_from_config
