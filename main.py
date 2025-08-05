@@ -10,8 +10,6 @@ from xibo_client import create_xibo_client_from_config
 import yaml
 import argparse
 
-seen_files = set()
-
 def get_nextcloud_files(config):
     """
     Get file list from NextCloud using proper WebDAV client.
@@ -170,17 +168,20 @@ def main():
     print(f"Temporary folder created: {tmp_folder}")
     print("-" * 50)
 
+    latest_upload_date = start_time
+
     while True:
         try:
-            new_files = get_new_files(config)
+            new_files = get_nextcloud_files_detailed(config)
             if new_files:
-                print(f"New files found: {[f['name'] for f in new_files]}")
-                
+                processed_count = success_count = failed_count = 0
                 for file_info in new_files:
                     # Skip files modified before the script started
-                    if file_info['upload_date'] <= start_time:
+                    if file_info['upload_date'] <= latest_upload_date:
                         continue
                     
+                    processed_count += 1
+                    latest_upload_date = max(latest_upload_date, file_info['upload_date'])
                     file_name = file_info['name']
                     print(f"Processing: {file_name}")
                     
@@ -201,17 +202,19 @@ def main():
                             os.remove(downloaded_path)  # Clean up downloaded files after upload
                             
                             if success:
+                                success_count += 1
                                 print(f"✅ Successfully processed {file_name}")
                             else:
+                                failed_count += 1
                                 print(f"❌ Failed to upload {file_name} to Xibo")
                         else:
+                            failed_count += 1
                             print(f"❌ Failed to download {file_name}")
                             
                     except Exception as e:
+                        failed_count += 1
                         print(f"❌ Error processing {file_name}: {e}")
                         traceback.print_exc()
-                
-                print("-" * 50)
             else:
                 pass
                 
@@ -220,6 +223,8 @@ def main():
             traceback.print_exc()
         finally:
             shutil.rmtree(tmp_folder, ignore_errors=True)
+            if processed_count > 0:
+                print(f"Processed {processed_count} files: {success_count} succeeded, {failed_count} failed")
             
         sleep(poll_interval)
 
