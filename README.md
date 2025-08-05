@@ -44,7 +44,15 @@ poetry install
 
 ## Configuration
 
-Create a configuration file at `config/example.yaml`:
+The application supports multiple ways to specify the configuration file:
+
+1. **Command line argument**: `xibo-screen-updater -c /path/to/config.yaml`
+2. **Environment variable**: `export CONFIG_PATH=/path/to/config.yaml`
+3. **Default location**: `./config.yaml` (in the current directory)
+
+### Configuration File Format
+
+Create a YAML configuration file (e.g., `config.yaml`):
 
 ```yaml
 name: xibo_screen_1
@@ -79,6 +87,22 @@ project_to:
       color: '#000000'
 ```
 
+### Setting up Configuration
+
+```bash
+# Option 1: Copy example and edit
+cp config/example.yaml config.yaml
+# Edit config.yaml with your credentials
+
+# Option 2: Use a different location
+cp config/example.yaml /etc/xibo/production.yaml
+# Then run with: xibo-screen-updater -c /etc/xibo/production.yaml
+
+# Option 3: Use environment variable
+export CONFIG_PATH=/path/to/your/config.yaml
+xibo-screen-updater
+```
+
 ### Configuration Options
 
 #### NextCloud Settings (`copy_from`)
@@ -103,26 +127,52 @@ project_to:
 ### Running the Main Application
 
 ```bash
-# Using the installed script
+# Using the installed script (looks for ./config.yaml by default)
+xibo-screen-updater
+
+# Specify a custom config file
+xibo-screen-updater -c /path/to/your/config.yaml
+
+# Use environment variable
+export CONFIG_PATH=/path/to/your/config.yaml
 xibo-screen-updater
 
 # Or directly with Python
-python main.py
+python main.py -c /path/to/your/config.yaml
+```
+
+### Command Line Options
+
+```bash
+# Show help
+xibo-screen-updater --help
+
+# Specify config file
+xibo-screen-updater --config /path/to/config.yaml
+xibo-screen-updater -c /path/to/config.yaml
 ```
 
 ### Testing Connections
 
 Test your NextCloud connection:
 ```bash
+# Using default config location (./config.yaml)
 test-nextcloud
-# Or: python test_nextcloud.py
+
+# Or with custom config
+python test_nextcloud.py  # Edit the script to specify config path
 ```
 
 Test your Xibo connection:
 ```bash
+# Using default config location (./config.yaml)  
 test-xibo
-# Or: python test_xibo.py
+
+# Or with custom config
+python test_xibo.py  # Edit the script to specify config path
 ```
+
+**Note**: The test scripts currently look for `config/example.yaml`. You may need to copy your actual config there for testing, or modify the test scripts to use your config file location.
 
 ## Development
 

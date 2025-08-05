@@ -122,9 +122,29 @@ test-xibo
 
 ## 📝 Configuration
 
-1. Copy `config/example.yaml` to `config/config.yaml`
-2. Edit with your actual credentials
-3. Run the application
+The application supports flexible configuration loading:
+
+### Configuration Priority (highest to lowest):
+1. **Command line**: `xibo-screen-updater -c /path/to/config.yaml`
+2. **Environment variable**: `CONFIG_PATH=/path/to/config.yaml`
+3. **Default location**: `./config.yaml`
+
+### Setup Steps:
+```bash
+# Method 1: Default location
+cp config/example.yaml config.yaml
+# Edit config.yaml with your credentials
+xibo-screen-updater
+
+# Method 2: Custom location with command line
+cp config/example.yaml /etc/xibo/production.yaml
+# Edit /etc/xibo/production.yaml
+xibo-screen-updater -c /etc/xibo/production.yaml
+
+# Method 3: Environment variable
+export CONFIG_PATH=/path/to/your/config.yaml
+xibo-screen-updater
+```
 
 ## ✅ Verification
 
@@ -140,9 +160,33 @@ The setup creates a complete Python package that:
 
 ## 🔄 Next Steps
 
-1. Edit `config/config.yaml` with your credentials
-2. Test connections: `make test-connections`
-3. Run the application: `make run` or `xibo-screen-updater`
-4. For development: `make setup-dev` and use the code quality tools
+1. **Setup configuration**:
+   ```bash
+   # Copy example config
+   cp config/example.yaml config.yaml
+   # Edit config.yaml with your credentials
+   ```
+
+2. **Test connections**: 
+   ```bash
+   make test-connections
+   # Note: Test scripts currently use config/example.yaml
+   ```
+
+3. **Run the application**: 
+   ```bash
+   # Using default config location (./config.yaml)
+   make run
+   # or: xibo-screen-updater
+   
+   # Using custom config location
+   xibo-screen-updater -c /path/to/your/config.yaml
+   
+   # Using environment variable
+   export CONFIG_PATH=/path/to/your/config.yaml
+   xibo-screen-updater
+   ```
+
+4. **For development**: `make setup-dev` and use the code quality tools
 
 The project is now fully configured and ready for development and deployment!
