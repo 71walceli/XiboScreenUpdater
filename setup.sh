@@ -87,10 +87,12 @@ if [ ! -d "config" ]; then
 fi
 
 # Copy example config if it doesn't exist
-if [ ! -f "config/config.yaml" ] && [ -f "config/example.yaml" ]; then
+if [ ! -f "config.yaml" ] && [ -f "config/example.yaml" ]; then
     print_status "Creating config.yaml from example..."
-    cp config/example.yaml config/config.yaml
-    print_warning "Please edit config/config.yaml with your actual credentials"
+    cp config/example.yaml config.yaml
+    print_warning "Please edit config.yaml with your actual credentials"
+elif [ ! -f "config.yaml" ]; then
+    print_warning "No config.yaml found. Please create one from config/example.yaml"
 fi
 
 # Create data directory if it doesn't exist
@@ -109,11 +111,14 @@ print_success "Setup complete!"
 echo ""
 echo "Next steps:"
 echo "1. Activate the virtual environment: source .venv/bin/activate"
-echo "2. Edit config/config.yaml with your credentials"
+echo "2. Edit config.yaml with your credentials"
 echo "3. Test connections:"
 echo "   - test-nextcloud"
 echo "   - test-xibo"
-echo "4. Run the application: xibo-screen-updater"
+echo "4. Run the application:"
+echo "   - xibo-screen-updater                    # Uses ./config.yaml"
+echo "   - xibo-screen-updater -c /path/to/config.yaml"
+echo "   - CONFIG_PATH=/path/to/config.yaml xibo-screen-updater"
 echo ""
 echo "For development:"
 echo "- Run tests: pytest"

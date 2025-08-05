@@ -22,7 +22,8 @@ help:
 	@echo "  make check-all    - Run all code quality checks"
 	@echo ""
 	@echo "Running:"
-	@echo "  make run          - Run the main application"
+	@echo "  make run          - Run the main application (uses ./config.yaml)"
+	@echo "  make run-config   - Show config usage examples"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean        - Clean up build files and cache"
@@ -69,6 +70,17 @@ check-all: format lint type-check
 # Running
 run:
 	python main.py
+
+run-config:
+	@echo "Usage examples:"
+	@echo "  make run                                    # Uses ./config.yaml"
+	@echo "  make run CONFIG=/path/to/config.yaml       # Uses specific config"
+	@echo "  CONFIG_PATH=/path/to/config.yaml make run  # Uses environment variable"
+	@if [ -n "$(CONFIG)" ]; then \
+		python main.py -c $(CONFIG); \
+	else \
+		python main.py; \
+	fi
 
 # Maintenance
 clean:
