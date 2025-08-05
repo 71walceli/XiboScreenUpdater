@@ -1,12 +1,12 @@
-name: xibo_screen_1
+name: xibo_screen_example
 copy_from: 
   provider: nextcloud
-  path: Xibo
+  path: path/to/your/nextcloud/folder
   auth: 
     type: basic_auth
-    user: admin
-    password: admin_password
-  server: http://localhost:8080
+    user: username
+    password: your_password
+  server: http://your-nextcloud-server.com
   extensions: 
     - .jpg
     - .png
@@ -16,14 +16,14 @@ copy_from:
   poll_interval: 10  # seconds
 project_to:
   provider: xibo
-  host: http://localhost:8082/api/
+  host: http://your-xibo-server.com/api/
   auth:
     type: oauth2
     grant_type: client_credentials
-    client_id: ccd390f2b0bfda863749772d7990c55e674f3183
-    client_secret: 77b565300719672af67a96195654a7785011647f016e3ec8b9cf59535ffe49a3c5bd215be92d426ceedd3960d5b94725e586fdf03085d4389021fb443a3e19805e9adc019aa25162e65728e704f2d641401b2267a46c8f484f26efeef46f824c7f9d6ac4d0b315c1972c89bc6b3900db3bfda6441afa556a3893e57a2637ef
+    client_id: your_client_id
+    client_secret: your_client_secret
   display:
-    name: Tecno
+    name: Display Name
     width: 1920
     height: 1080
     background:
