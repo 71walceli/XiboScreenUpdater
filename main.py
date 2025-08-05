@@ -8,6 +8,7 @@ from requests.auth import HTTPBasicAuth
 from nextcloud_client import NextCloudClient
 from xibo_client import create_xibo_client_from_config
 import yaml
+import argparse
 
 seen_files = set()
 
@@ -147,14 +148,31 @@ def upload_and_set_xibo_screen(filepath: str, config: dict, screen_name: str = N
         return False
 
 def load_config(file_path):
-    with open(file_path, 'r') as file:
-        return yaml.safe_load(file)
+    try:
+        with open(file_path, 'r') as file:
+            return yaml.safe_load(file)
+    except Exception as e:
+        print(f"Error loading config file {file_path}: {e}")
+        exit(1)
 
 def main():
     """
     Main function that monitors NextCloud for new files and uploads them to Xibo.
     """
-    config = load_config("config/example.yaml")
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Monitor NextCloud for new files and upload to Xibo')
+    parser.add_argument('-c', '--config', type=str, help='Path to configuration file')
+    args = parser.parse_args()
+    
+    config_path = None
+    if args.config:
+        config_path = args.config
+    elif 'CONFIG_PATH' in os.environ:
+        config_path = os.environ['CONFIG_PATH']
+    else:
+        config_path = './config.yaml'
+    config = load_config(config_path)
     display_name = config['project_to']['display'].get('name')  # Use the name from config
     poll_interval = config['copy_from'].get('poll_interval', 10)  # Default to 10 seconds
 
