@@ -296,7 +296,8 @@ class NextCloudProvider(SourceProvider):
             return None
     
     def get_new_files_since(self, timestamp: datetime, directory_path: str = "", 
-                          extensions: Optional[List[str]] = None) -> List[FileInfo]:
+        extensions: Optional[List[str]] = None
+    ) -> List[FileInfo]:
         """
         Get files uploaded since the given timestamp.
         

@@ -9,11 +9,9 @@ import sys
 import argparse
 from datetime import datetime
 from time import sleep
-from typing import Dict, List, Optional
-import logging
 
 from .config_manager import ConfigManager, ConfigurationError, resolve_config_path
-from .file_processor import FileProcessor, ProcessingStats
+from .file_processor import ProcessingStats
 from .logging_config import setup_logging, get_component_logger, LogContext
 from ..providers.xibo import create_xibo_provider
 from ..providers.nextcloud import create_nextcloud_provider

@@ -216,7 +216,8 @@ class XiboProvider(DestinationProvider):
             return None
     
     def set_display_content(self, media_id: str, display_name: str, 
-                          duration_hours: int = 24) -> bool:
+            duration_hours: int = 24
+        ) -> bool:
         """
         Set media as content for a specific display.
         
@@ -297,7 +298,8 @@ class XiboProvider(DestinationProvider):
             return []
     
     def _create_fullscreen_layout(self, media_id: int, name: Optional[str] = None, 
-                                resolution_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+            resolution_id: Optional[int] = None
+        ) -> Optional[Dict[str, Any]]:
         """Create a fullscreen layout with a single media item."""
         self._log(f"Creating fullscreen layout for media ID: {media_id}")
         
