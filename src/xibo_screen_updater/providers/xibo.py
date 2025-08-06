@@ -408,13 +408,13 @@ class XiboProvider(DestinationProvider):
     def _delete_auto_scheduled_events(self, display_group_id: int, exclude_event_id: Optional[int] = None) -> int:
         """Delete all auto-scheduled events for a display group."""
         try:
-            events = self._get_display_group_events(display_group_id)
+            events = self.get_events(display_group_id)
             deleted_count = 0
             
             for event in events:
                 event_id = event.get('eventId')
-                event_name = event.get('event', '')
-                
+                event_name = event.get('name', '')
+
                 # Skip the current event
                 if exclude_event_id and event_id == exclude_event_id:
                     continue
@@ -430,17 +430,27 @@ class XiboProvider(DestinationProvider):
             self.logger.error(f"Error deleting auto-scheduled events: {e}")
             return 0
     
-    def _get_display_group_events(self, display_group_id: int) -> List[Dict[str, Any]]:
-        """Get all scheduled events for a display group."""
+    def get_events(self, display_group_id: Optional[int]) -> List[Dict[str, Any]]:
+        """
+        Get all scheduled events for a display group.
+        
+        Args:
+            display_group_id: ID of the display group
+            
+        Returns:
+            List of event dictionaries
+        """
         try:
-            date = time.strftime('%Y-%m-%d %H:%M:%S')
-            response = self._make_request('GET', f'schedule/{display_group_id}/events', params={'date': date})
+            if not display_group_id:
+                display_group_id = ""
+            data = {'displayId': display_group_id}
+            response = self._make_request('GET', f'schedule', params=data)
             result = response.json()
-            return result.get('events', [])
+            return result
         except Exception as e:
             self.logger.error(f"Error getting events for display group {display_group_id}: {e}")
             return []
-    
+
     def _delete_schedule_event(self, event_id: int) -> bool:
         """Delete a scheduled event."""
         try:
