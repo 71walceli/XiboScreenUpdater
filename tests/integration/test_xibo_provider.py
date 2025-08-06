@@ -214,7 +214,7 @@ class TestXiboProviderLiveIntegration(unittest.TestCase):
             
             # Test that we can find the configured display
             display_name = config['project_to']['display']['name']
-            display = provider._find_display_by_name(display_name)
+            display = provider.find_display_by_name(display_name)
             
             if display:
                 print(f"✅ Found configured display: {display_name}")

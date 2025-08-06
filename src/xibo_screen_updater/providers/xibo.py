@@ -320,7 +320,7 @@ class XiboProvider(DestinationProvider):
     
     def _find_display_group_by_display_name(self, display_name: str) -> Optional[int]:
         """Find display group ID for a specific display name."""
-        display = self._find_display_by_name(display_name)
+        display = self.find_display_by_name(display_name)
         if display:
             display_group_id = display.get('displayGroupId')
             if display_group_id:
@@ -336,7 +336,7 @@ class XiboProvider(DestinationProvider):
         
         return None
     
-    def _find_display_by_name(self, display_name: str) -> Optional[Dict[str, Any]]:
+    def find_display_by_name(self, display_name: str) -> Optional[Dict[str, Any]]:
         """Find a display by name."""
         displays = self.get_displays()
         for display in displays:
