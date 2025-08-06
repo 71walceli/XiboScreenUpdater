@@ -16,6 +16,9 @@ import logging
 
 from .base import DestinationProvider, registry
 
+# TODO Handle these through configuration
+auto_scheduled_prefix = "Auto-scheduled"
+auto_layout_prefix = "Auto-layout"
 
 class XiboProvider(DestinationProvider):
     """
@@ -233,7 +236,7 @@ class XiboProvider(DestinationProvider):
                 return False
             
             # Create a fullscreen layout for the media
-            layout_name = f"Auto-layout: {display_name} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            layout_name = f"{auto_layout_prefix}: {display_name} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
             fullscreen_layout = self._create_fullscreen_layout(int(media_id), name=layout_name)
             
             if not fullscreen_layout:
@@ -250,7 +253,7 @@ class XiboProvider(DestinationProvider):
                 display_group_ids=[display_group_id],
                 hours_from_now=0,  # Start now
                 duration_hours=duration_hours,
-                name=f"Auto-scheduled: {display_name}",
+                name=f"{auto_scheduled_prefix}: {display_name}",
                 is_priority=True
             )
             
@@ -261,7 +264,8 @@ class XiboProvider(DestinationProvider):
             
             # Delete other auto-scheduled events to avoid conflicts
             deleted_count = self._delete_auto_scheduled_events(display_group_id, exclude_event_id=event_id)
-            
+            self.logger.info(f"Deleted {deleted_count} old auto-scheduled events for display group {display_group_id}")
+
             # Refresh display to apply changes
             self._force_refresh_display(display_group_id)
             
@@ -414,7 +418,7 @@ class XiboProvider(DestinationProvider):
                     continue
                 
                 # Delete events that start with "Auto-scheduled:"
-                if event_name.startswith("Auto-scheduled:"):
+                if event_name.startswith(f"{auto_scheduled_prefix}:"):
                     if self._delete_schedule_event(event_id):
                         deleted_count += 1
             
