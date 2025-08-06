@@ -1,0 +1,36 @@
+# Example requests for Xibo Screen Updater API
+
+@HOST = http://localhost:8082/api
+@client_id = <your_client_id_here>
+@client_secret = <your_client_secret_here>
+
+### Auth with Oauth2
+# @name login
+POST {{HOST}}/authorize/access_token
+Content-Type: application/json
+
+{
+  "grant_type": "client_credentials",
+  "client_id": "{{client_id}}",
+  "client_secret": "{{client_secret}}"
+}
+
+### Get all layouts
+# @name getLayouts
+GET {{HOST}}/layout/fullscreen
+Authorization: Bearer {{login.response.body.$.access_token}}
+
+### Get Campaigns
+# @name getCampaigns
+GET {{HOST}}/campaign
+Authorization: Bearer {{login.response.body.$.access_token}}
+
+### Schedules
+# @name getSchedules
+GET {{HOST}}/schedule?displayId=1
+Authorization: Bearer {{login.response.body.$.access_token}}
+
+### Schedules
+# @name getSchedules2
+GET {{HOST}}/schedule/1/events?date=2025-08-07+00:00:00
+Authorization: Bearer {{login.response.body.$.access_token}}
