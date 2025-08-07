@@ -77,7 +77,10 @@ class NextCloudProvider(SourceProvider):
         path = path.strip('/')
         return f"{self.server_url}/remote.php/dav/files/{self.username}/{path}"
     
-    def get_files(self, directory_path: str = "", extensions: Optional[List[str]] = None) -> List[FileInfo]:
+    def get_files(self, 
+        directory_path: str = "", 
+        extensions: Optional[List[str]] = None
+    ) -> List[FileInfo]:
         """
         Get list of files from NextCloud directory.
         
@@ -131,7 +134,10 @@ class NextCloudProvider(SourceProvider):
             self.logger.error(f"Error listing files: {e}")
             return []
     
-    def _parse_propfind_response(self, xml_content: str, extensions: Optional[List[str]] = None) -> List[FileInfo]:
+    def _parse_propfind_response(self, 
+        xml_content: str, 
+        extensions: Optional[List[str]] = None
+    ) -> List[FileInfo]:
         """
         Parse WebDAV PROPFIND XML response to extract file information.
         
@@ -193,7 +199,12 @@ class NextCloudProvider(SourceProvider):
         
         return files
     
-    def _extract_file_info(self, prop, namespaces: Dict[str, str], filename: str, href: str) -> Optional[FileInfo]:
+    def _extract_file_info(self, 
+        prop, 
+        namespaces: Dict[str, str], 
+        filename: str, 
+        href: str
+    ) -> Optional[FileInfo]:
         """Extract file information from XML properties."""
         try:
             # Get file size
@@ -295,7 +306,9 @@ class NextCloudProvider(SourceProvider):
             self.logger.error(f"Network error downloading {file_path}: {e}")
             return None
     
-    def get_new_files_since(self, timestamp: datetime, directory_path: str = "", 
+    def get_new_files_since(self, 
+        timestamp: datetime, 
+        directory_path: str = "", 
         extensions: Optional[List[str]] = None
     ) -> List[FileInfo]:
         """

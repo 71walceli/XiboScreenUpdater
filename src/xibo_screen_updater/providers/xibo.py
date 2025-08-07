@@ -10,7 +10,6 @@ import os
 import time
 from urllib.parse import urljoin
 from typing import Optional, Dict, Any, List
-import json
 from datetime import datetime, timedelta
 import logging
 
@@ -168,8 +167,11 @@ class XiboProvider(DestinationProvider):
         response.raise_for_status()
         return response
     
-    def upload_media(self, file_path: str, name: Optional[str] = None, 
-                    tags: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def upload_media(self, 
+        file_path: str, 
+        name: Optional[str] = None, 
+        tags: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         Upload a media file to the Xibo library.
         
@@ -215,9 +217,11 @@ class XiboProvider(DestinationProvider):
             self.logger.error(f"Error uploading media {file_path}: {e}")
             return None
     
-    def set_display_content(self, media_id: str, display_name: str, 
-            duration_hours: int = 24
-        ) -> bool:
+    def set_display_content(self, 
+        media_id: str, 
+        display_name: str, 
+        duration_hours: int = 24
+    ) -> bool:
         """
         Set media as content for a specific display.
         
@@ -297,9 +301,11 @@ class XiboProvider(DestinationProvider):
             self.logger.error(f"Error getting displays: {e}")
             return []
     
-    def _create_fullscreen_layout(self, media_id: int, name: Optional[str] = None, 
-            resolution_id: Optional[int] = None
-        ) -> Optional[Dict[str, Any]]:
+    def _create_fullscreen_layout(self, 
+        media_id: int, 
+        name: Optional[str] = None, 
+        resolution_id: Optional[int] = None
+    ) -> Optional[Dict[str, Any]]:
         """Create a fullscreen layout with a single media item."""
         self._log(f"Creating fullscreen layout for media ID: {media_id}")
         
@@ -359,9 +365,14 @@ class XiboProvider(DestinationProvider):
             self.logger.error(f"Error getting display groups: {e}")
             return []
     
-    def _schedule_media_relative(self, media_id: int, display_group_ids: List[int],
-                               hours_from_now: int = 0, duration_hours: int = 24,
-                               name: Optional[str] = None, is_priority: bool = False) -> Dict[str, Any]:
+    def _schedule_media_relative(self, 
+        media_id: int, 
+        display_group_ids: List[int],
+        hours_from_now: int = 0, 
+        duration_hours: int = 24,
+        name: Optional[str] = None, 
+        is_priority: bool = False
+    ) -> Dict[str, Any]:
         """Schedule a media item with relative timing."""
         start_time = datetime.now() + timedelta(hours=hours_from_now)
         end_time = start_time + timedelta(hours=duration_hours)
@@ -373,9 +384,15 @@ class XiboProvider(DestinationProvider):
         
         return self._schedule_media(media_id, display_group_ids, from_dt, to_dt, name, is_priority=is_priority)
     
-    def _schedule_media(self, media_id: int, display_group_ids: List[int], 
-                       from_dt: str, to_dt: str, name: Optional[str] = None,
-                       day_part_id: int = 1, is_priority: bool = False) -> Dict[str, Any]:
+    def _schedule_media(self, 
+        media_id: int, 
+        display_group_ids: List[int], 
+        from_dt: str, 
+        to_dt: str, 
+        name: Optional[str] = None,
+        day_part_id: int = 1, 
+        is_priority: bool = False
+    ) -> Dict[str, Any]:
         """Schedule a media item to display groups."""
         self._log(f"Scheduling media {media_id} to display groups {display_group_ids}")
         
@@ -405,7 +422,10 @@ class XiboProvider(DestinationProvider):
             self.logger.error(f"Error scheduling media: {e}")
             return {}
     
-    def _delete_auto_scheduled_events(self, display_group_id: int, exclude_event_id: Optional[int] = None) -> int:
+    def _delete_auto_scheduled_events(self, 
+        display_group_id: int, 
+        exclude_event_id: Optional[int] = None
+    ) -> int:
         """Delete all auto-scheduled events for a display group."""
         try:
             events = self.get_events(display_group_id)

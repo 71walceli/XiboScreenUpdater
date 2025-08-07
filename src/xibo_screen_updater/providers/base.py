@@ -39,7 +39,10 @@ class SourceProvider(ABC):
         pass
     
     @abstractmethod
-    def get_files(self, directory_path: str = "", extensions: Optional[List[str]] = None) -> List[FileInfo]:
+    def get_files(self, 
+        directory_path: str = "", 
+        extensions: Optional[List[str]] = None
+    ) -> List[FileInfo]:
         """
         Get list of files from the source.
         
@@ -67,8 +70,11 @@ class SourceProvider(ABC):
         pass
     
     @abstractmethod
-    def get_new_files_since(self, timestamp: datetime, directory_path: str = "", 
-                          extensions: Optional[List[str]] = None) -> List[FileInfo]:
+    def get_new_files_since(self, 
+        timestamp: datetime, 
+        directory_path: str = "", 
+        extensions: Optional[List[str]] = None
+    ) -> List[FileInfo]:
         """
         Get files that have been uploaded since the given timestamp.
         
@@ -97,8 +103,11 @@ class DestinationProvider(ABC):
         pass
     
     @abstractmethod
-    def upload_media(self, file_path: str, name: Optional[str] = None, 
-                    tags: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def upload_media(self, 
+        file_path: str, 
+        name: Optional[str] = None, 
+        tags: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """
         Upload a media file to the destination.
         
@@ -113,8 +122,11 @@ class DestinationProvider(ABC):
         pass
     
     @abstractmethod
-    def set_display_content(self, media_id: str, display_name: str, 
-                          duration_hours: int = 24) -> bool:
+    def set_display_content(self, 
+        media_id: str, 
+        display_name: str, 
+        duration_hours: int = 24
+    ) -> bool:
         """
         Set media as content for a specific display.
         

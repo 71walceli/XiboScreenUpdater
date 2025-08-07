@@ -37,7 +37,7 @@ class ProcessingResult:
 class FileProcessor:
     """Handles NextCloud file operations and processing."""
     
-    def __init__(self, config: Dict[str, any], logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize file processor.
         
