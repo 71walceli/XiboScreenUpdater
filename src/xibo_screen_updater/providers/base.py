@@ -10,20 +10,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from dataclasses import dataclass
 
-
-@dataclass
-class FileInfo:
-    """Information about a file from a source provider."""
-    name: str
-    path: str
-    size: int
-    upload_date: datetime
-    content_type: Optional[str] = None
-    etag: Optional[str] = None
-    
-    def __str__(self):
-        return f"FileInfo(name='{self.name}', size={self.size}, upload_date={self.upload_date})"
-
+from ..types.file_info import FileInfo
 
 class SourceProvider(ABC):
     """Abstract base class for source providers (e.g., NextCloud, FTP, etc.)."""

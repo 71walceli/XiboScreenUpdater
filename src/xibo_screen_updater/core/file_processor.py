@@ -8,23 +8,12 @@ import os
 import tempfile
 import shutil
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 import logging
 
 from ..providers.nextcloud import NextCloudProvider
-
-
-@dataclass
-class FileInfo:
-    """File information from NextCloud."""
-    name: str
-    path: str
-    upload_date: datetime
-    size: Optional[int] = None
-    content_type: Optional[str] = None
-    etag: Optional[str] = None
-
+from ..types.file_info import FileInfo
 
 @dataclass
 class ProcessingResult:
