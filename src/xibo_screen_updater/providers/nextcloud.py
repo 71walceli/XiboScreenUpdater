@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 import logging
 
-from .base import SourceProvider, FileInfo, registry
+from .base import SourceProvider, registry
+from ..types.file_info import FileInfo
 
 
 class NextCloudProvider(SourceProvider):

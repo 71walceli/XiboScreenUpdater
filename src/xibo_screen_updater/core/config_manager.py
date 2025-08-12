@@ -10,6 +10,8 @@ import yaml
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
+from ..types.config import ConfigurationError
+
 
 @dataclass
 class ConfigPaths:
@@ -25,11 +27,6 @@ class ConfigPaths:
         if self.env_var:
             return self.env_var
         return self.default
-
-
-class ConfigurationError(Exception):
-    """Raised when configuration is invalid or missing."""
-    pass
 
 
 class ConfigManager:
@@ -96,11 +93,12 @@ class ConfigManager:
         xibo_auth = project_to.get('auth', {})
         if 'client_id' not in xibo_auth or 'client_secret' not in xibo_auth:
             raise ConfigurationError("Missing client_id or client_secret in project_to.auth")
-        
-        # Validate display
-        display = project_to.get('display', {})
-        if 'name' not in display:
-            raise ConfigurationError("Missing name in project_to.display")
+
+        # Validate project_to.criteria
+        if project_to.get('criteria') is None:
+            raise ConfigurationError("Missing criteria in project_to")
+        if project_to['criteria'] and not isinstance(project_to['criteria'], list):
+            raise ConfigurationError("Criteria must be a list")
     
     @property
     def config(self) -> Dict[str, Any]:
